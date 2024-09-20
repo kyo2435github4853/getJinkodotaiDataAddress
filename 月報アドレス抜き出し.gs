@@ -87,12 +87,6 @@ function getTerminalList(terminalURL,tType,headURL,parseDict){
 
 }
 
-function checkFileType(target_text){
-  console.log(target_text.slice(-1))
-  var fType = Number(target_text.slice(-1));
-  return fType
-}
-
 function makeBufferList(targetText,headURL,reg,bufArray){
   console.log(targetText.match(reg)[1]);
   let pick_url = headURL + targetText.match(reg)[1];
@@ -105,63 +99,6 @@ function makeBufferList(targetText,headURL,reg,bufArray){
   return bufArray
 }
 
-//組み合わせをメソッド化する
-//参考：　http://www2.nagano.ac.jp/hiraoka/PL/l/js.gakkou.html
-//↓ここから
-function pickEach(a) {
-  // console.log(a)
-  if(a.length<=0) return []
-  else {
-    let top=a[0], rest=a.slice(1)
-    return [[top,rest]].concat(pickEach(rest).map(([t,r])=>[t,[top].concat(r)]))
-  }
-}
-
-Array.prototype.perm = function(){
-  //console.log(this);
-  return this.length<=0 ? [[]] :
-    pickEach(this).map(([top,rest])=>rest.perm().map(l=>[top].concat(l))).flat()
-}
-
-//↑ここまで
-
-
-//人口動態統計における書類の特定に使う正規表現を生成する
-//↓ここから
-function makeRegMix(parts_list){
-  /*
-  正規表現パーツリストから正規表現の組み合わせを生成する
-  */
-  let head = "";
-  let tail = "";
-  let result = [];
-  let middle_list = [];
-
-  //頭か尻かを判断する
-  for(let i=0; i < parts_list.length; i++){
-    if(parts_list[i].slice(0,1) == "^"){
-      head = parts_list[i].slice(1);
-    }else if(parts_list[i].slice(-1) == "$"){
-      tail = parts_list[i].slice(0,-1);
-    }else{
-      middle_list.push(parts_list[i]);
-    }
-  }
-
-  //middle_listの組み合わせを網羅するリストを作成する
-  middle_set = middle_list.perm()
-  //console.log(middle_set);
-
-  for(let m_parts of middle_set){
-    m_parts.unshift(head);
-    result.push(m_parts.join("[，・]*") + tail);
-  }
-
-  console.log(result);
-  return result
-
-}
-
 function makeRegList(){
   /*
   人口動態統計月報における死因簡単分類、感染症による死亡の名称が定まっていないため、これに対応する正規表現リストを作成する
@@ -172,14 +109,7 @@ function makeRegList(){
   let key_list = 'kantan,infect'.split(',');
   let reg_list = [kantan_parts,infect_parts];
 
-  let reg_object = new Object;
-
-  for(let i = 0; i<key_list.length; i++){
-    let obj_key = key_list[i];
-    let obj_reg = reg_list[i];
-
-    reg_object[obj_key] = makeRegMix(obj_reg);
-  }
+  let reg_object = addItemToObject(new Object, key_list, reg_ist);
   
   console.log(reg_object);
 
@@ -230,6 +160,7 @@ function makeGeppouBuffer(fromText, regCategory, headURL){
   console.log(data_text);
 
   //なぜか結果記録配列が元関数においておくと変化してしまうためこの関数内で新規に生成することにした
+  //変数を渡す場合、変数のメモリアドレスを渡しているため、これに注意する必要がある
   return makeBufferList(data_text,headURL,regLink,['-','-'])
 }
 
@@ -323,20 +254,30 @@ function getSokuhouDataList(address){
   return [buf_list]
 }
 
-function getRootAddress(rFlag = '月報') {
+function getRootAddress(rFlag = '月報',bottomYear = '2０１３') {
+  //下限数字の初期処理
+  //文字列型だった場合数字として扱う
+  let checkYear = convertYearString(bottomYear);
+
   var tableURL = 'dummy';
   //月報に関して一連の流れを統括する関数、流れとしては各月報を保管するアドレスを特定し、保管するアドレスから目的のアドレスを抽出する
   if(rFlag=='月報'){
     tableURL = 'https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=1&tclass1=000001053058&tclass2=000001053060&cycle_facet=tclass1%3Acycle&tclass3val=0&metadata=1&data=1';
+    bottomYear = checkYearRange(checkYear,2009,new Date().getFullYear());
+
   }else if(rFlag=='速報'){
     tableURL = 'https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=1&tclass1=000001053058&tclass2=000001053059&cycle_facet=tclass1%3Acycle&tclass3val=0&metadata=1&data=1';
+    bottomYear = checkYearRange(checkYear,2010,new Date().getFullYear());
+
   }else{
     return "入力文字列が不適です。月報もしくは速報と入力してください。"
   }
-  //取得年でパラメタを変える必要があるため、辞書で管理する
+
+  let to1_str = `<span>${bottomYear}年</span>`;
+
   var parse_dict = {
     'from1':'<div class="stat-cycle_sheet">',
-    'to1':'<span>2012年</span>',
+    'to1':to1_str,
     'from2':'href="/stat-search/files?page=1&amp;layout=datalist&amp;cycle=1&amp;toukei=00450011',
     'to2':'" class="stat-item_child">'
   }
