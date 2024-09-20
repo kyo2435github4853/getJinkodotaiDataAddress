@@ -12,24 +12,31 @@ function getParseList(parseData,fromText,toText){
 
 }
 
-function getYMList(parseData,headURL){
+function getYMList(parseData,headURL,btmFlag){
   /*
   抜き出した人口動態統計管理HTMLから年月をyyyymm形式で抜き出す
   */
-  var year_parse = Parser.data(parseData).from('cycle_header">').to('</ul>').iterate();
-  console.log(year_parse.length);
+  var year_parse = Parser.data(parseData).from('<ul class="stat-cycle_ul_other">').to('</ul>').iterate();
+  //最後の年かどうかで対応が変わってしまうため注意
+
+  if(!btmFlag){
+    year_parse.pop()
+  }
+  console.log(`iterate後の要素数は${year_parse.length}`);
+  console.log(year_parse.slice(-1));
+  
   //match正規表現中の()によるグループ囲みを行うと、グループの内容がそれぞれリストとして取り出すことができる
   //gフラグなどはつけ外しを動的に行いたい場合はRegExp()で指定すること
   var y_reg = /<span>([0-9]+)年<\/span>/;
-  var m_reg = 'href="(.+)" class="stat-item_child">([0-9]+)月';
+  var m_reg = 'href="(.+?)" class="stat-item_child">([0-9]+)月';
   
   var result_list = [];
   var y_data = "dummy";
   var y_text_buf = "dummy";
 
-  for(let i=0; i < year_parse.length-1; i++){
+  for(let i=0; i < year_parse.length; i++){
     //年データを取得する
-    y_text_buf = year_parse[year_parse.length-2-i];
+    y_text_buf = year_parse[year_parse.length-1-i];
     y_data = y_text_buf.match(y_reg);
     //console.log(y_data);
 
@@ -55,7 +62,7 @@ function getYMList(parseData,headURL){
 
 }
 
-function getTerminalList(terminalURL,tType,headURL,parseDict){
+function getTerminalList(terminalURL,tType,headURL,parseDict,btmFlag){
   /*各指定から記録元HTMLのリストを作成する
   この際、年月も一緒に取得し、年月とアドレスが一致するようにする
   terminalURL:サーチ対象のページURL
@@ -82,7 +89,7 @@ function getTerminalList(terminalURL,tType,headURL,parseDict){
   var parse_big = Parser.data(UCD_html).from(from1).to(to1).build();
 
   //年月をyyyymmという形式に修正し、対象アドレスも取得したリストを作成し、返す
-  var result = getYMList(parse_big,headURL);
+  var result = getYMList(parse_big,headURL,btmFlag);
   return result
 
 }
@@ -216,7 +223,7 @@ function getSokuhouDataList(address){
   var parseDict = {
     'from1':'<div class="stat-dataset_list-main">',
     'to1':'<div style="display: none">',
-    'reg':'file-download(.+)"'
+    'reg':'file-download(.+?)"'
   }
 
   var from1 = parseDict.from1;
@@ -254,26 +261,37 @@ function getSokuhouDataList(address){
   return [buf_list]
 }
 
-function getRootAddress(rFlag = '月報',bottomYear = '2０１３') {
+function getRootAddress(rFlag = '速報',bottomYear = '２０１') {
   //下限数字の初期処理
   //文字列型だった場合数字として扱う
   let checkYear = convertYearString(bottomYear);
+  let pastYear;
 
-  var tableURL = 'dummy';
+  let tableURL = 'dummy';
+  let to1_str = 'dummy';
   //月報に関して一連の流れを統括する関数、流れとしては各月報を保管するアドレスを特定し、保管するアドレスから目的のアドレスを抽出する
   if(rFlag=='月報'){
+    pastYear = 2009;
     tableURL = 'https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=1&tclass1=000001053058&tclass2=000001053060&cycle_facet=tclass1%3Acycle&tclass3val=0&metadata=1&data=1';
-    bottomYear = checkYearRange(checkYear,2009,new Date().getFullYear());
-
   }else if(rFlag=='速報'){
+    pastYear = 2010;
     tableURL = 'https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=1&tclass1=000001053058&tclass2=000001053059&cycle_facet=tclass1%3Acycle&tclass3val=0&metadata=1&data=1';
-    bottomYear = checkYearRange(checkYear,2010,new Date().getFullYear());
-
   }else{
     return "入力文字列が不適です。月報もしくは速報と入力してください。"
   }
 
-  let to1_str = `<span>${bottomYear}年</span>`;
+  bottomYear = checkYearRange(checkYear,pastYear);
+
+  let mostBottomFlag = new Boolean;
+
+  if(bottomYear==pastYear){
+    to1_str = '<div style="display: none">'
+    mostBottomFlag = true;
+  }else{
+    to1_str = `<span>${bottomYear-1}年</span>`;
+    mostBottomFlag = false;
+  }
+  console.log(to1_str);
 
   var parse_dict = {
     'from1':'<div class="stat-cycle_sheet">',
@@ -287,7 +305,7 @@ function getRootAddress(rFlag = '月報',bottomYear = '2０１３') {
   var tType = 'UTF-8';//該当ページの文字コード
 
   //各データの大本となるアドレスをリストで取得する
-  let addr_list = getTerminalList(tableURL,tType,head_url,parse_dict);
+  let addr_list = getTerminalList(tableURL, tType, head_url, parse_dict, mostBottomFlag);
 
   console.log(addr_list);
 

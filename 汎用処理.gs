@@ -61,6 +61,7 @@ function checkFileType(target_text){
   return fType
 }
 
+//入力した対象年データを適切に処理する
 function convertYearString(yStr='2０１3.05'){
   /*
   入力した年データを適切に前処理する
@@ -94,12 +95,24 @@ function convertYearString(yStr='2０１3.05'){
 
 }
 
-function checkYearRange(yearData,mostPastRecYear,lastRecYear,nenpouFlag=false){
+function checkYearRange(yearData,mostPastRecYear,nenpouFlag=false){
+  /*
+  取得する年の範囲を確認し、適切かどうか判断する
+  yearData:取得する年の下限
+  mostPastRecYear:過去データの下限年、年報、速報、月報によってそれぞれ違う
+  nenpouFlag:年報だった場合、必ず昨年以前になるためこれを判断する
+  */
+
+  //最新年を取得する
+  let lastRecYear = new Date().getFullYear();
 
   //年報だった場合、最新-1
   if(nenpouFlag){
-    lastRecYear -= 1
+    lastRecYear -= 1;
   }
+
+  //入力された最下限年について値が適切か確認する
+  mostPastRecYear = convertYearString(mostPastRecYear);
 
   if(yearData<=mostPastRecYear){
     console.log(`取得下限年が過小のため、${mostPastRecYear}に設定します。`);

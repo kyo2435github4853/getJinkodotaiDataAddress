@@ -3,7 +3,7 @@ function getNenpouYearList(parseData,headURL,btmYear=2013){
   抜き出した人口動態統計管理HTMLから年をyyyy形式で抜き出す
   */
   console.log(headURL);
-  var year_parse = Parser.data(parseData).from('<a tabindex="22"').to('</div>').iterate();
+  var year_parse = Parser.data(parseData).from('<a tabindex="22"').to('</a>').iterate();
   console.log(year_parse.length);
   //match正規表現中の()によるグループ囲みを行うと、グループの内容がそれぞれリストとして取り出すことができる
   //gフラグなどはつけ外しを動的に行いたい場合はRegExp()で指定すること
@@ -13,17 +13,15 @@ function getNenpouYearList(parseData,headURL,btmYear=2013){
   var y_data = "dummy";
   var y_text_buf = "dummy";
 
-  for(let i=0; i < year_parse.length-1; i++){
+  for(let i=0; i < year_parse.length; i++){
     //年データを取得する
     y_text_buf = year_parse[i];
     y_data = y_text_buf.match(y_reg);
-    //console.log(y_data);
+    console.log(y_data);
 
     //デフォルトでは2012年以前のものは取得しない
-    if(btmYear>1980){
-      if(Number(y_data[1])<btmYear){
-        break;
-      }
+    if(Number(y_data[1]) < btmYear){
+      break;
     }
 
     //該当年のURLを取得する
@@ -71,7 +69,7 @@ function getNenpouTerminal(terminalURL,tType,headURL,parseDict,btmYear=2013){
   //大枠＞個別という具合にパースする
   var parse_big = Parser.data(UCD_html).from(from1).to(to1).build();
 
-  //年月をyyyymmという形式に修正し、対象アドレスも取得したリストを作成し、返す
+  //年をyyyyという形式に修正し、対象アドレスも取得したリストを作成し、返す
   var result = getNenpouYearList(parse_big,headURL,btmYear);
   return result
 
@@ -162,7 +160,7 @@ function getNenpouTargetRoot(bottomYear = 2013){
   //文字列型だった場合数字として扱う
   let checkYear = convertYearString(bottomYear);
 
-  bottomYear = checkYearRange(checkYear,1980,new Date().getFullYear(),nenpouFlag=true);  
+  bottomYear = checkYearRange(checkYear,1980,nenpouFlag=true);  
 
   //let target_data_obj = new Object;
   let pref_death_url = 'https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=7&tclass1=000001053058&tclass2=000001053061&tclass3=000001053074&tclass4=000001053089&tclass5val=0';
