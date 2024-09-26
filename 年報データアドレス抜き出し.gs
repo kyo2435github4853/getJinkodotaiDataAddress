@@ -28,30 +28,13 @@ function makeNenpouFileTitleObj() {
 
 }
 
-function getNenpouDataAddress(parseDict,colName,reg,summaryURL,detailURL){
+function getNenpouDataAddress(parseDict,parseText,colName,reg){
   //
-  let from1 = parseDict.from1;
-  let to1 = parseDict.to1;
   let head_url = parseDict.head_url;
-  let tType = parseDict.tType;
-
-  let terminalURL = 'dummy';
 
   let reg_set = makeRegMix(reg.split(','));
 
-  //特定のデータのみ読み込むURLを変更する
-  if(colName=='age_birth'){
-    terminalURL = summaryURL;
-  }else{
-    terminalURL = detailURL;
-  }
-
-  //URLに対しフェッチを行ってHTMLデータを取得する
-  let UCD_html = UrlFetchApp.fetch(terminalURL).getContentText(tType);
-  //大枠＞個別という具合にパースする
-  let parse_big = Parser.data(UCD_html).from(from1).to(to1).build();
-
-  let reg_sample = searchHead(parse_big,reg_set);
+  let reg_sample = searchHead(parseText,reg_set);
 
   let url_reg = 'dummy';
   let buf = []
@@ -61,11 +44,11 @@ function getNenpouDataAddress(parseDict,colName,reg,summaryURL,detailURL){
     //注意！！正規表現における.は「改行を含まない」ため、行をまたいだ検索を行おうとすると改行で止まり、nullを返す場合がある
     //また、基本的に最長データを目標とするため、最短データにするために*+の後に?をつける必要がある
     url_reg = reg_sample + '[\\s\\S]+?file-download(.+)"';
-    result = head_url + parse_big.match(RegExp(url_reg))[1];
+    result = head_url + parseText.match(RegExp(url_reg))[1];
   }else{
     //死因基本分類の該当ファイルは2つあるため、それを考慮して抜き出す
-    let head_reg = parse_big.match(RegExp(reg_sample))[0]
-    parse_small = Parser.data(parse_big).from(head_reg).to('<li class="stat-dataset_list-detail-item stat-dataset_list-border-top">').build();
+    let head_reg = parseText.match(RegExp(reg_sample))[0]
+    parse_small = Parser.data(parseText).from(head_reg).to('<li class="stat-dataset_list-detail-item stat-dataset_list-border-top">').build();
     //console.log(parse_small);
     buf = Parser.data(parse_small).from('file-download').to('"').iterate();
     console.log(`死因基本分類では以下のように抜き出せた。\n${buf}`);
@@ -109,6 +92,22 @@ function separateFileType(addressList){
   return [result]
 }
 
+function getParseText(parseDict,url){
+  /*
+  urlから初期パースした文字列を返す
+  */
+  let from1 = parseDict.from1;
+  let to1 = parseDict.to1;
+  let tType = parseDict.tType;
+
+  //URLに対しフェッチを行ってHTMLデータを取得する
+  let UCD_html = UrlFetchApp.fetch(url).getContentText(tType);
+  //大枠＞個別という具合にパースする
+  let parse_big = Parser.data(UCD_html).from(from1).to(to1).build();
+
+  return parse_big
+}
+
 //デフォルトとして、2013年のアドレスを採用
 //こんな使い方を想定＞=getNenpouDataList(A1:B1)
 function getNenpouDataList(rootTarget = [['https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=7&year=20130&month=0&tclass1=000001053058&tclass2=000001053061&tclass3=000001053065&result_back=1&cycle_facet=tclass1&tclass4val=0&metadata=1&data=1','https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=7&year=20130&month=0&tclass1=000001053058&tclass2=000001053061&tclass3=000001053073&tclass4=000001053082&result_back=1&tclass5val=0']]){
@@ -127,13 +126,23 @@ function getNenpouDataList(rootTarget = [['https://www.e-stat.go.jp/stat-search/
     
   }
 
+  let summary_parse = getParseText(parse_dict,summary_url);
+  let detail_parse = getParseText(parse_dict,detail_url);
+
   //csvかexcelかで変える必要あり
   //死因基本分類のやつは2つあるためそれも考慮する必要あり
   let buf = [];
+  let use_parse = 'dummy';
+
   for(let d_col in reg_obj){
     //キーをd_colとして取得している
     console.log(d_col);
-    buf.push(getNenpouDataAddress(parse_dict, d_col, reg_obj[d_col], summary_url, detail_url));
+    if(d_col == 'age_birth'){
+      use_parse = summary_parse.slice(0);
+    }else{
+      use_parse = detail_parse.slice(0);
+    }
+    buf.push(getNenpouDataAddress(parse_dict, use_parse, d_col, reg_obj[d_col]));
   }
 
   let buf_str = buf.join(',');
