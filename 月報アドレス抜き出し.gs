@@ -126,33 +126,18 @@ function makeRegList(){
 //↑ここまで
 
 function searchReg(fromText, regList){
-  /*
-  該当ページ内範囲のうち、どの正規表現が該当するのかを判断し、該当正規表現を返す
-  fromText:該当ページの特定範囲、通常は大まかに必要範囲に絞ったものを使用する
-  regList:正規表現の組み合わせリスト
-  */
-  let rList_copy = regList.slice(0);
-  //console.log(rList_copy);
-
-  let target_reg = rList_copy.shift();
+  
+  let target_reg = searchHead(fromText, regList);
 
   let result = 'dummy';
   let head_reg = 'dummy';
-
-  while(!RegExp(target_reg).test(fromText)){
-    if(rList_copy.length>0){
-      target_reg = rList_copy.shift();
-    }else{
-      throw new RangeError('該当する正規表現はリスト内に見つかりませんでした。');
-    }
-  }
 
   head_reg = fromText.match(RegExp(target_reg))[0]
   //注意！！正規表現における.は「改行を含まない」ため、行をまたいだ検索を行おうとすると改行で止まり、nullを返す場合がある
   //また、基本的に最長データを目標とするため、最短データにするために*+の後に?をつける
   result = head_reg + '[\\s\\S]+?file-download(.+)"'
 
-  console.log(target_reg);
+  
   console.log(result);
 
   return result

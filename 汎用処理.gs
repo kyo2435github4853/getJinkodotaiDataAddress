@@ -154,3 +154,26 @@ function addItemToObject(obj, keyList, dataList, fun = undefined, args = undefin
 
   return obj
 }
+
+function searchHead(fromText, regList){
+  /*
+  該当ページ内範囲のうち、どの正規表現が該当するのかを判断し、該当正規表現を返す
+  fromText:該当ページの特定範囲、通常は大まかに必要範囲に絞ったものを使用する
+  regList:正規表現の組み合わせリスト
+  */
+  let rList_copy = regList.slice(0);
+  //console.log(rList_copy);
+
+  let target_reg = rList_copy.shift();
+
+  while(!RegExp(target_reg).test(fromText)){
+    if(rList_copy.length>0){
+      target_reg = rList_copy.shift();
+    }else{
+      throw new RangeError('該当する正規表現はリスト内に見つかりませんでした。');
+    }
+  }
+  console.log(target_reg);
+
+  return target_reg
+}
