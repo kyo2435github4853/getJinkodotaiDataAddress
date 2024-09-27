@@ -155,6 +155,9 @@ function getNenpouTargetRoot(bottomYear = 2013){
   /*
   取得したいデータの年一覧を取得する
   */
+  if(Array.isArray(bottomYear)){
+    bottomYear = bottomYear[0];
+  }
 
   //下限数字の初期処理
   //文字列型だった場合数字として扱う
