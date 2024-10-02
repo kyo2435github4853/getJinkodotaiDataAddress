@@ -112,6 +112,7 @@ function getParseText(parseDict,url){
 //こんな使い方を想定＞=getNenpouDataList(A1:B1)
 function getNenpouDataList(rootTarget = [['https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=7&year=20130&month=0&tclass1=000001053058&tclass2=000001053061&tclass3=000001053065&result_back=1&cycle_facet=tclass1&tclass4val=0&metadata=1&data=1','https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&toukei=00450011&tstat=000001028897&cycle=7&year=20130&month=0&tclass1=000001053058&tclass2=000001053061&tclass3=000001053073&tclass4=000001053082&result_back=1&tclass5val=0']]){
 
+  console.log(rootTarget);
   let summary_url = rootTarget[0][0];
   let detail_url = rootTarget[0][1];
 

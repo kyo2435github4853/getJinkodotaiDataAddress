@@ -155,6 +155,7 @@ function getNenpouTargetRoot(bottomYear = 2013){
   /*
   取得したいデータの年一覧を取得する
   */
+  //API呼び出し時はfunctionとしてリストが与えられるため、それを考慮
   if(Array.isArray(bottomYear)){
     bottomYear = bottomYear[0];
   }

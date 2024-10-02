@@ -116,7 +116,7 @@ function makeRegList(){
   let key_list = 'kantan,infect'.split(',');
   let reg_list = [kantan_parts,infect_parts];
 
-  let reg_object = addItemToObject(new Object, key_list, reg_ist);
+  let reg_object = addItemToObject(new Object, key_list, reg_list);
   
   console.log(reg_object);
 
@@ -161,6 +161,10 @@ function getGeppouDataList(address="https://www.e-stat.go.jp/stat-search/files?p
   最終的には[[年月,元アドレス,死亡CSV,死亡EXCEL,感染症CSV,感染症EXCEL],,,,]というリストになる
   月報は月や集計年によって対象データの表記の仕方が違うため、必要な正規表現を複数用意してから望むこと
   */
+  //API呼び出し時はfunctionとしてリストが与えられるため、それを考慮
+  if(Array.isArray(address)){
+    address = address[0];
+  }
   var geppou_reg_obj = makeRegList();
 
   var parseDict = {
@@ -201,10 +205,14 @@ function getGeppouDataList(address="https://www.e-stat.go.jp/stat-search/files?p
   
 }
 
-function getSokuhouDataList(address){
+function getSokuhouDataList(address="https://www.e-stat.go.jp/stat-search/files?page=1&layout=datalist&data=1&metadata=1&cycle=1&toukei=00450011&tstat=000001028897&tclass1=000001053058&tclass2=000001053059&cycle_facet=tclass1%3Acycle&tclass3val=0&year=20130&month=11010301&result_back=1"){
   /*速報のデータを抜き出していく、PDFとEXCELファイルがあるため、どちらも取得し、1列目にEXCEL、2列目にPDFを配置する
   最終的には[[年月,元アドレス,EXCEL,PDF],,,,]というリストになる
   */
+  //API呼び出し時はfunctionとしてリストが与えられるため、それを考慮
+  if(Array.isArray(address)){
+    address = address[0];
+  }
   var parseDict = {
     'from1':'<div class="stat-dataset_list-main">',
     'to1':'<div style="display: none">',
@@ -249,6 +257,9 @@ function getSokuhouDataList(address){
 function getRootAddress(rFlag = '速報',bottomYear = '２０１') {
   //下限数字の初期処理
   //文字列型だった場合数字として扱う
+
+  //API呼び出し時はfunctionとしてリストが与えられる、複数要素であればそのままの状態でok
+  
   let checkYear = convertYearString(bottomYear);
   let pastYear;
 
