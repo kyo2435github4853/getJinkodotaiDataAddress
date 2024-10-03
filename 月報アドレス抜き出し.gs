@@ -127,7 +127,8 @@ function makeRegList(){
 
 function searchReg(fromText, regList){
   
-  let target_reg = searchHead(fromText, regList);
+  let reg_set = makeRegMix(regList);
+  let target_reg = searchHead(fromText, reg_set);
 
   let result = 'dummy';
   let head_reg = 'dummy';
